@@ -65,12 +65,12 @@ private:
         createInstance();
         setupDebugMessenger();
         pickPhysicalDevice();
-
     }
 
     void pickPhysicalDevice() {
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
         if ( deviceCount == 0 ) {
             throw std::runtime_error("No vulkan device found");
         }
@@ -96,16 +96,22 @@ private:
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
 
-        //use GLFW to get extentions for communicate with window system crossplatform stuff
-        uint32_t glfwExtentionCount = 0;
-        const char** glfwExtentions;
+        auto extensions = getRequiredExtensions();
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        createInfo.ppEnabledExtensionNames = extensions.data();
 
-        glfwExtentions = glfwGetRequiredInstanceExtensions(&glfwExtentionCount);
 
-        createInfo.enabledExtensionCount = glfwExtentionCount;
-        createInfo.ppEnabledExtensionNames = glfwExtentions;
+        // //use GLFW to get extentions for communicate with window system crossplatform stuff
+        // uint32_t glfwExtentionCount = 0;
+        // const char** glfwExtentions;
+        //
+        // glfwExtentions = glfwGetRequiredInstanceExtensions(&glfwExtentionCount);
+        //
+        // createInfo.enabledExtensionCount = glfwExtentionCount;
+        // createInfo.ppEnabledExtensionNames = glfwExtentions;
 
         //idk
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
         if (enableValidationLayers) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
@@ -122,14 +128,6 @@ private:
         {
             throw std::runtime_error("failed to create vulkan instance");
         }
-    }
-
-    bool checkValidationLayerSupport() {
-        uint32_t layerCount;
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-        std::vector<VkLayerProperties> availableLayers(layerCount);
-        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-        return false;
     }
 
     void mainLoop() {
@@ -151,7 +149,7 @@ private:
     void initWindow() {
         glfwInit();
         if (!glfwInit())
-            std::cout << "dota";
+            std::cout << "Can\'t init glfw";
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
